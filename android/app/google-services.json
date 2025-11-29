@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "525731330667",
+    "firebase_url": "https://lighto-of-on-default-rtdb.firebaseio.com",
+    "project_id": "lighto-of-on",
+    "storage_bucket": "lighto-of-on.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:525731330667:android:232b14bff2d80e5cbd0f2e",
+        "android_client_info": {
+          "package_name": "com.example.light_on"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCrTz8kd66liGvWiPWU2H0Q0ms8k_sDQMI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,60 @@
+#include <WiFi.h>
+#include <Firebase_ESP_Client.h>
+
+// WiFi credentials
+#define WIFI_SSID "tahsin sakib"
+#define WIFI_PASSWORD "Pakhi@1#2"
+
+// Firebase credentials
+#define DATABASE_URL "https://lighto-of-on-default-rtdb.firebaseio.com/"
+#define API_KEY "AIzaSyCrTz8kd66liGvWiPWU2H0Q0ms8k_sDQMI"
+
+// Firebase objects
+FirebaseData fbdo;
+FirebaseAuth auth;
+FirebaseConfig config;
+
+int ledPin = 2; // D2
+
+// Firebase user credentials
+#define USER_EMAIL "your_email@gmail.com"
+#define USER_PASSWORD "your_password"
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(ledPin, OUTPUT);
+
+  // Connect to WiFi
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  Serial.print("Connecting to WiFi");
+  while (WiFi.status() != WL_CONNECTED) {
+    Serial.print(".");
+    delay(300);
+  }
+  Serial.println("\nWiFi Connected!");
+
+  // Firebase setup
+  config.api_key = API_KEY;
+  config.database_url = DATABASE_URL;
+
+  // Set user credentials for email/password login
+  auth.user.email = USER_EMAIL;
+  auth.user.password = USER_PASSWORD;
+
+  Firebase.begin(&config, &auth);
+  Firebase.reconnectWiFi(true);
+}
+
+void loop() {
+  // Read LED status from Firebase
+  if (Firebase.RTDB.getBool(&fbdo, "led/status")) {
+    bool ledState = fbdo.boolData();
+    digitalWrite(ledPin, ledState ? LOW : HIGH); // Active LOW
+    Serial.print("LED Status: ");
+    Serial.println(ledState ? "ON" : "OFF");
+  } else {
+    Serial.print("Error reading Firebase: ");
+    Serial.println(fbdo.errorReason());
+  }
+  delay(500);
+}
