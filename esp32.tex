@@ -56,5 +56,6 @@ void loop() {
     Serial.print("Error reading Firebase: ");
     Serial.println(fbdo.errorReason());
   }
+  // Wait before next read
   delay(500);
 }

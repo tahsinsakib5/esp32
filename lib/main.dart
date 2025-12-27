@@ -1,138 +1,81 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_database/firebase_database.dart';
 
-void main() {
-  runApp(DeepSeekTranslatorApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(); // ensure your firebase options are setup
+  runApp(MyApp());
 }
 
-class DeepSeekTranslatorApp extends StatelessWidget {
+class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: TranslatorPage(),
       debugShowCheckedModeBanner: false,
+      home: LedControlPage(),
     );
   }
 }
 
-class TranslatorPage extends StatefulWidget {
+class LedControlPage extends StatefulWidget {
   @override
-  _TranslatorPageState createState() => _TranslatorPageState();
+  _LedControlPageState createState() => _LedControlPageState();
 }
 
-class _TranslatorPageState extends State<TranslatorPage> {
-  TextEditingController inputController = TextEditingController();
-  String translatedText = "";
+class _LedControlPageState extends State<LedControlPage> {
+  final DatabaseReference ledRef =
+      FirebaseDatabase.instance.ref("led/status");
 
-  final String apiKey = "sk-6aad2153cdae43529cf8af2873ae87f2";
+  bool ledStatus = false;
 
-  // Available languages
-  final List<String> languages = [
-    "English",
-    "Bangla",
-    "Hindi",
-    "Arabic",
-    "Chinese",
-    "Spanish",
-    "French",
-    "German",
-    "Japanese",
-    "Korean",
-  ];
+  @override
+  void initState() {
+    super.initState();
 
-  String selectedLanguage = "English";
+    // Listen from firebase (real-time update)
+    ledRef.onValue.listen((event) {
+      final value = event.snapshot.value;
+      if (value is bool) {
+        setState(() {
+          ledStatus = value;
+        });
+      }
+    });
+  }
 
-  Future<void> translateText() async {
-    final url = Uri.parse("https://api.deepseek.com/v1/chat/completions");
-
-    final response = await http.post(
-      url,
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer $apiKey",
-      },
-      body: jsonEncode({
-        "model": "deepseek-chat",
-        "messages": [
-          {
-            "role": "system",
-            "content": "You are a translation assistant."
-          },
-          {
-            "role": "user",
-            "content":
-                "Translate to $selectedLanguage: ${inputController.text}"
-          }
-        ]
-      }),
-    );
-
-    if (response.statusCode == 200) {
-      final json = jsonDecode(response.body);
-      setState(() {
-        translatedText = json["choices"][0]["message"]["content"];
-      });
-    } else {
-      setState(() {
-        translatedText = "Error: ${response.body}";
-      });
-    }
+  Future<void> toggleLed() async {
+    await ledRef.set(!ledStatus);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("DeepSeek Translator"),
+        title: const Text("ESP32 LED Control"),
+        backgroundColor: Colors.blue,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(15),
+      body: Center(
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Language Dropdown
-            DropdownButtonFormField<String>(
-              value: selectedLanguage,
-              items: languages
-                  .map((lang) =>
-                      DropdownMenuItem(value: lang, child: Text(lang)))
-                  .toList(),
+            Icon(
+              ledStatus ? Icons.lightbulb : Icons.lightbulb_outline,
+              size: 120,
+              color: ledStatus ? Colors.amber : Colors.grey,
+            ),
+            const SizedBox(height: 20),
+            Switch(
+              value: ledStatus,
               onChanged: (value) {
-                setState(() {
-                  selectedLanguage = value!;
-                });
+                toggleLed();
               },
-              decoration: InputDecoration(
-                labelText: "Select Translation Language",
-                border: OutlineInputBorder(),
-              ),
+              activeColor: Colors.amber,
             ),
-
-            SizedBox(height: 20),
-
-            // Text input
-            TextField(
-              controller: inputController,
-              decoration: InputDecoration(
-                labelText: "Enter text",
-                border: OutlineInputBorder(),
-              ),
-              minLines: 1,
-              maxLines: 3,
-            ),
-
-            SizedBox(height: 20),
-
-            ElevatedButton(
-              onPressed: translateText,
-              child: Text("Translate"),
-            ),
-
-            SizedBox(height: 20),
-
+            const SizedBox(height: 10),
             Text(
-              translatedText,
-              style: TextStyle(fontSize: 18),
+              ledStatus ? "LED is ON" : "LED is OFF",
+              style: TextStyle(fontSize: 22),
             ),
           ],
         ),
